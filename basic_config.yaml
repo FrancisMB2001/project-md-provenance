@@ -1,0 +1,14 @@
+blobstores:
+    disk:
+        type: disk
+        cachedir: /tmp/provenance-intro-artifacts
+        read: True
+        write: True
+        delete: True
+artifact_repos:
+    local:
+        type: memory
+        read: True
+        write: True
+        delete: True
+default_repo: local
