@@ -1,15 +1,29 @@
+import yaml
+from custom_provenance import provenance as p
+
+# Load the YAML configuration file
+with open('basic_config.yaml', 'r') as file:
+    config = yaml.safe_load(file)
+
+# Ensure the default_repo is set in the configuration
+if 'default_repo' not in config:
+    raise ValueError("The 'default_repo' key is missing in the configuration")
+
+# Pass the configuration dictionary to load_config
+p.load_config(config)
+
+# Rest of your FastAPI application code
 from fastapi import FastAPI, HTTPException, Depends, Query
 from pydantic import BaseModel
-from typing import List
-from provenance import provenance
+from typing import List, Dict
 
 app = FastAPI()
 
 # In-memory storage for simplicity
-users = {}
-posts = {}
-comments = {}
-likes = {}
+users: Dict[str, 'User'] = {}
+posts: Dict[int, 'Post'] = {}
+comments: Dict[int, 'Comment'] = {}
+likes: Dict[int, List[str]] = {}
 
 # Models
 class User(BaseModel):
@@ -17,11 +31,13 @@ class User(BaseModel):
     password: str
 
 class Post(BaseModel):
+    id: int
     title: str
     content: str
     author: str
 
 class Comment(BaseModel):
+    id: int
     post_id: int
     content: str
     author: str
@@ -31,65 +47,100 @@ class Like(BaseModel):
     user: str
 
 # Dependency to simulate user authentication
+@p.provenance()
 def get_current_user(username: str = Query(...)):
     if username not in users:
         raise HTTPException(status_code=404, detail="User not found")
     return users[username]
 
-# Functions with provenance annotations
+# User registration
 @app.post("/register")
-@provenance()
+@p.provenance()
 def register(user: User):
     if user.username in users:
         raise HTTPException(status_code=400, detail="User already exists")
     users[user.username] = user
     return {"message": "User registered successfully"}
 
+# User login
 @app.post("/login")
-@provenance()
+@p.provenance()
 def login(user: User):
     if user.username not in users or users[user.username].password != user.password:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Invalid username or password")
     return {"message": "Login successful"}
 
+# Create a post
 @app.post("/posts")
-@provenance()
+@p.provenance()
 def create_post(post: Post, current_user: User = Depends(get_current_user)):
-    post_id = len(posts) + 1
-    posts[post_id] = post
-    return {"message": "Post created successfully", "post_id": post_id}
+    post.id = len(posts) + 1
+    posts[post.id] = post
+    return post
 
+# Edit a post
 @app.put("/posts/{post_id}")
-@provenance()
+@p.provenance()
 def edit_post(post_id: int, post: Post, current_user: User = Depends(get_current_user)):
     if post_id not in posts:
         raise HTTPException(status_code=404, detail="Post not found")
+    if posts[post_id].author != current_user.username:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this post")
     posts[post_id] = post
-    return {"message": "Post edited successfully"}
+    return post
 
+# Create a comment
 @app.post("/comments")
-@provenance()
+@p.provenance()
 def create_comment(comment: Comment, current_user: User = Depends(get_current_user)):
-    comment_id = len(comments) + 1
-    comments[comment_id] = comment
-    return {"message": "Comment created successfully", "comment_id": comment_id}
+    comment.id = len(comments) + 1
+    comments[comment.id] = comment
+    return comment
 
+# Edit a comment
 @app.put("/comments/{comment_id}")
-@provenance()
+@p.provenance()
 def edit_comment(comment_id: int, comment: Comment, current_user: User = Depends(get_current_user)):
     if comment_id not in comments:
         raise HTTPException(status_code=404, detail="Comment not found")
+    if comments[comment_id].author != current_user.username:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this comment")
     comments[comment_id] = comment
-    return {"message": "Comment edited successfully"}
+    return comment
 
-@app.post("/likes")
-@provenance()
-def like_post(like: Like, current_user: User = Depends(get_current_user)):
-    like_id = len(likes) + 1
-    likes[like_id] = like
-    return {"message": "Post liked successfully", "like_id": like_id}
+# Delete a comment
+@app.delete("/comments/{comment_id}")
+@p.provenance()
+def delete_comment(comment_id: int, current_user: User = Depends(get_current_user)):
+    if comment_id not in comments:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comments[comment_id].author != current_user.username:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+    del comments[comment_id]
+    return {"message": "Comment deleted successfully"}
 
-# Run the application
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+# Like a post
+@app.post("/posts/{post_id}/like")
+@p.provenance()
+def like_post(post_id: int, current_user: User = Depends(get_current_user)):
+    if post_id not in posts:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post_id not in likes:
+        likes[post_id] = []
+    if current_user.username in likes[post_id]:
+        raise HTTPException(status_code=400, detail="Post already liked")
+    likes[post_id].append(current_user.username)
+    return {"message": "Post liked successfully"}
+
+# Like a comment
+@app.post("/comments/{comment_id}/like")
+@p.provenance()
+def like_comment(comment_id: int, current_user: User = Depends(get_current_user)):
+    if comment_id not in comments:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comment_id not in likes:
+        likes[comment_id] = []
+    if current_user.username in likes[comment_id]:
+        raise HTTPException(status_code=400, detail="Comment already liked")
+    likes[comment_id].append(current_user.username)
+    return {"message": "Comment liked successfully"}

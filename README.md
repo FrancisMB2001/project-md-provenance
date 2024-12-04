@@ -10,7 +10,7 @@ Small uvicorn / FastAPI project built with python to test the use of the provena
 ```bash
 python3 -m venv prov-testing
 source prov-testing/bin/activate  
-pip install fastapi uvicorn provenance
+pip install fastapi uvicorn pyyaml
 ```
 - Start the api server 
 ```bash
