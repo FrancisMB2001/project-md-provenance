@@ -36,6 +36,20 @@ def like_comment(username, comment_id):
     print(response.json())
 
 def test_endpoints():
+    # Static test case 
+    register_user("static_user_1", "password")
+    login_user("static_user_1", "password")
+    post_id_1 = create_post("static_user_1", "Static Title 1", "Static Content 1")
+    post_id_2 = create_post("static_user_1", "Static Title 2", "Static Content 2")
+    edit_post("static_user_1", post_id_1, "Updated Static Title 1", "Updated Static Content 1")
+    comment_id_1 = create_comment("static_user_1", post_id_1, "Static Comment 1")
+    comment_id_2 = create_comment("static_user_1", post_id_1, "Static Comment 2")
+    like_post("static_user_1", post_id_1)
+    like_comment("static_user_1", comment_id_1)
+    like_comment("static_user_1", comment_id_2)
+
+
+
     # Register users
     for i in range(50):
         threading.Thread(target=register_user, args=(f"user{i}", "password")).start()
