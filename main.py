@@ -1,5 +1,9 @@
 import yaml
-from custom_provenance import provenance as p
+# from custom_provenance import provenance as p
+import provenance as p 
+from fastapi import FastAPI, HTTPException, Depends, Query
+from pydantic import BaseModel
+from typing import List, Dict
 
 # Load the YAML configuration file
 with open('basic_config.yaml', 'r') as file:
@@ -11,11 +15,6 @@ if 'default_repo' not in config:
 
 # Pass the configuration dictionary to load_config
 p.load_config(config)
-
-# Rest of your FastAPI application code
-from fastapi import FastAPI, HTTPException, Depends, Query
-from pydantic import BaseModel
-from typing import List, Dict
 
 app = FastAPI()
 
@@ -36,11 +35,22 @@ class Post(BaseModel):
     content: str
     author: str
 
+class NewPost(BaseModel):
+    title: str
+    content: str
+    author: str
+
 class Comment(BaseModel):
     id: int
     post_id: int
     content: str
     author: str
+
+class NewComment(BaseModel):
+    post_id: int
+    content: str
+    author: str
+
 
 class Like(BaseModel):
     post_id: int
@@ -73,10 +83,16 @@ def login(user: User):
 # Create a post
 @app.post("/posts")
 @p.provenance()
-def create_post(post: Post, current_user: User = Depends(get_current_user)):
-    post.id = len(posts) + 1
-    posts[post.id] = post
-    return post
+def create_post(post: NewPost, current_user: User = Depends(get_current_user)):
+    new_id = len(posts) + 1
+    new_post = Post(
+        id=new_id,
+        title=post.title,
+        content=post.content,
+        author=post.author
+    )
+    posts[new_id] = new_post
+    return new_post
 
 # Edit a post
 @app.put("/posts/{post_id}")
@@ -92,10 +108,16 @@ def edit_post(post_id: int, post: Post, current_user: User = Depends(get_current
 # Create a comment
 @app.post("/comments")
 @p.provenance()
-def create_comment(comment: Comment, current_user: User = Depends(get_current_user)):
-    comment.id = len(comments) + 1
-    comments[comment.id] = comment
-    return comment
+def create_comment(comment: NewComment, current_user: User = Depends(get_current_user)):
+    new_id = len(comments) + 1
+    new_comment = Comment(
+        id=new_id,
+        post_id=comment.post_id,
+        content=comment.content,
+        author=comment.author
+    )
+    comments[new_id] = new_comment
+    return new_comment
 
 # Edit a comment
 @app.put("/comments/{comment_id}")

@@ -52,13 +52,13 @@ def test_endpoints():
         num_posts = random.randint(0, 5)  # Each user can create between 0 to 5 posts
         for _ in range(num_posts):
             post_id = create_post(f"user{i}", f"Title {i}", f"Content {i}")
-            post_ids.append(post_id)
+            post_ids.append((post_id, f"user{i}"))
             time.sleep(0.1)
 
     # Edit posts
     for i in range(50):
         if random.choice([True, False]):  # Randomly decide if the user will edit their posts
-            user_posts = [post_id for post_id in post_ids if f"user{i}" in post_id]
+            user_posts = [post_id for post_id, author in post_ids if author == f"user{i}"]
             for post_id in user_posts:
                 edit_post(f"user{i}", post_id, f"Updated Title {i}", f"Updated Content {i}")
                 time.sleep(0.1)
@@ -68,16 +68,16 @@ def test_endpoints():
     for i in range(50):
         num_comments = random.randint(0, 5)  # Each user can create between 0 to 5 comments
         for _ in range(num_comments):
-            post_id = random.choice(post_ids)
+            post_id, _ = random.choice(post_ids)
             comment_id = create_comment(f"user{i}", post_id, f"Comment {i}")
-            comment_ids.append(comment_id)
+            comment_ids.append((comment_id, f"user{i}"))
             time.sleep(0.1)
 
     # Like posts
     for i in range(50):
         num_likes = random.randint(0, 5)  # Each user can like between 0 to 5 posts
         for _ in range(num_likes):
-            post_id = random.choice(post_ids)
+            post_id, _ = random.choice(post_ids)
             like_post(f"user{i}", post_id)
             time.sleep(0.1)
 
@@ -85,7 +85,7 @@ def test_endpoints():
     for i in range(50):
         num_likes = random.randint(0, 5)  # Each user can like between 0 to 5 comments
         for _ in range(num_likes):
-            comment_id = random.choice(comment_ids)
+            comment_id, _ = random.choice(comment_ids)
             like_comment(f"user{i}", comment_id)
             time.sleep(0.1)
 
