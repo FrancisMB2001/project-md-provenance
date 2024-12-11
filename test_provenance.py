@@ -79,21 +79,18 @@ def test_endpoints():
     # Register users
     for i in range(50):
         threading.Thread(target=register_user, args=(f"user{i}", "password")).start()
-        time.sleep(0.1)  # Slight delay to avoid race conditions
 
     # Login users
     for i in range(50):
         threading.Thread(target=login_user, args=(f"user{i}", "password")).start()
-        time.sleep(0.1)
 
     # Create posts
     post_ids = []
     for i in range(50):
         num_posts = random.randint(0, 5)  # Each user can create between 0 to 5 posts
         for _ in range(num_posts):
-            post_id = create_post(f"user{i}", random.choice(names_list) + random.choice(names_list) + random.choice(names_list) + {i}, random.choice(content_list) + {i})
+            post_id = create_post(f"user{i}", random.choice(names_list) + random.choice(names_list) + random.choice(names_list) + str(i), random.choice(content_list) + str(i))
             post_ids.append((post_id, f"user{i}"))
-            time.sleep(0.1)
 
     # Edit posts
     for i in range(50):
@@ -101,7 +98,6 @@ def test_endpoints():
             user_posts = [post_id for post_id, author in post_ids if author == f"user{i}"]
             for post_id in user_posts:
                 edit_post(f"user{i}", post_id, f"Updated Title - {random.choice(names_list) + random.choice(names_list) + random.choice(names_list)}", f"Updated Content {random.choice(content_list)}")
-                time.sleep(0.1)
 
     # Create comments
     comment_ids = []
@@ -111,7 +107,6 @@ def test_endpoints():
             post_id, _ = random.choice(post_ids)
             comment_id = create_comment(f"user{i}", post_id, f"Comment {random.choice(content_list) + random.choice(content_list)}")
             comment_ids.append((comment_id, f"user{i}"))
-            time.sleep(0.1)
 
     # Like posts
     for i in range(50):
@@ -119,7 +114,7 @@ def test_endpoints():
         for _ in range(num_likes):
             post_id, _ = random.choice(post_ids)
             like_post(f"user{i}", post_id)
-            time.sleep(0.1)
+
 
     # Like comments
     for i in range(50):
@@ -127,7 +122,7 @@ def test_endpoints():
         for _ in range(num_likes):
             comment_id, _ = random.choice(comment_ids)
             like_comment(f"user{i}", comment_id)
-            time.sleep(0.1)
+
 
 if __name__ == "__main__":
     test_endpoints()
