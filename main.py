@@ -75,7 +75,7 @@ class Like(BaseModel):
 
 
 # Dependency to simulate user authentication
-@p.provenance()
+# @p.provenance()
 def get_current_user(username: str = Query(...)):
     if username not in users:
         raise HTTPException(status_code=404, detail="User not found")
@@ -84,8 +84,8 @@ def get_current_user(username: str = Query(...)):
 
 
 @p.provenance()
-def registT(username):
-    return username
+def registT(user_username):
+    return user_username
 
 
 # User registration
@@ -99,8 +99,8 @@ def register(user: User):
 
 
 @p.provenance()
-def loginT(username):
-    return username
+def loginT(user_username):
+    return user_username
 
 
 # User login
@@ -114,7 +114,7 @@ def login(user: User):
 
 
 @p.provenance()
-def createPostT(id, title, author):
+def createPostT(post_id, post_title, user_username):
     return id
 
 
@@ -131,7 +131,7 @@ def create_post(post: NewPost, current_user: User = Depends(get_current_user)):
 
 
 @p.provenance()
-def editPostT(id, title, author):
+def editPostT(post_id, post_title, user_username):
     return id
 
 
@@ -148,7 +148,7 @@ def edit_post(post_id: int, post: Post, current_user: User = Depends(get_current
 
 
 @p.provenance()
-def createCommentT(id, content, author):
+def createCommentT(comment_id, comment_content, user_username):
     return id
 
 
@@ -168,7 +168,7 @@ def create_comment(comment: NewComment, current_user: User = Depends(get_current
 
 
 @p.provenance()
-def editCommentT(id, content, author):
+def editCommentT(comment_id, comment_content, user_username):
     return id
 
 
@@ -184,29 +184,34 @@ def edit_comment(
         raise HTTPException(
             status_code=403, detail="Not authorized to edit this comment"
         )
-    editCommentT(comment.id, comment.content, comment.author)
+    editCommentT(comment.id, comment.content, comment.author, current_user.username)
     comments[comment_id] = comment
     return comment
 
 
 @p.provenance()
-def deleteCommentT(id):
+def deleteCommentT(comment_id, comment_author, user_username):
     return id
 
 
 # Delete a comment
 @app.delete("/comments/{comment_id}")
-@p.provenance()
 def delete_comment(comment_id: int, current_user: User = Depends(get_current_user)):
     if comment_id not in comments:
         raise HTTPException(status_code=404, detail="Comment not found")
-    if comments[comment_id].author != current_user.username:
+    comment_author = comments[comment_id].author
+    if comment_author != current_user.username:
         raise HTTPException(
             status_code=403, detail="Not authorized to delete this comment"
         )
-    deleteCommentT(comment_id)
+    deleteCommentT(comment_id, comment_author, current_user.username)
     del comments[comment_id]
     return {"message": "Comment deleted successfully"}
+
+
+@p.provenance()
+def likePostT(post_id, liked_post_id, user_username):
+    return post_id
 
 
 # Like a post
@@ -219,13 +224,19 @@ def like_post(post_id: int, current_user: User = Depends(get_current_user)):
     if current_user.username in likes[post_id]:
         raise HTTPException(status_code=400, detail="Post already liked")
 
+    likePostT(post_id, post_id, current_user.username)
+
     likes[post_id].append(current_user.username)
     return {"message": "Post liked successfully"}
 
 
+@p.provenance()
+def likeCommentT(post_id, liked_post_id, user_username):
+    return post_id
+
+
 # Like a comment
 @app.post("/comments/{comment_id}/like")
-@p.provenance()
 def like_comment(comment_id: int, current_user: User = Depends(get_current_user)):
     if comment_id not in comments:
         raise HTTPException(status_code=404, detail="Comment not found")
@@ -233,5 +244,8 @@ def like_comment(comment_id: int, current_user: User = Depends(get_current_user)
         likes[comment_id] = []
     if current_user.username in likes[comment_id]:
         raise HTTPException(status_code=400, detail="Comment already liked")
+
+    likeCommentT(comment_id, comment_id, current_user.username)
+
     likes[comment_id].append(current_user.username)
     return {"message": "Comment liked successfully"}

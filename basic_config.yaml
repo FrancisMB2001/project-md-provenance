@@ -1,3 +1,17 @@
+# blobstores:
+#     disk:
+#         type: disk
+#         cachedir: /tmp/provenance-intro-artifacts
+#         read: True
+#         write: True
+#         delete: True
+# artifact_repos:
+#     local:
+#         type: memory
+#         read: True
+#         write: True
+#         delete: True
+# default_repo: local
 blobstores:
     disk:
         type: disk
@@ -7,8 +21,12 @@ blobstores:
         delete: True
 artifact_repos:
     local:
-        type: memory
+        type: postgres
+        db: postgresql://postgres:beautiful@localhost/provenance-dbapi
+        store: 'disk'
         read: True
         write: True
         delete: True
+        # this option will create the database if it doesn't exist
+        create_db: True
 default_repo: local
