@@ -35,6 +35,32 @@ def like_comment(username, comment_id):
     response = requests.post(f"{BASE_URL}/comments/{comment_id}/like", params={"username": username})
     print(response.json())
 
+names_list = [
+    "lion", "tiger", "elephant", "giraffe", "zebra", "panther", "cheetah",
+    "eagle", "sparrow", "shark", "dolphin", "whale", "wolf", "fox",
+    "red", "blue", "green", "yellow", "purple", "orange", "pink",
+    "jump", "run", "dance", "swim", "fly", "crawl", "climb", "sing", "shout"
+]
+
+content_list = [
+    "A lion jumped over the moon", "The tiger ran through the forest",
+    "An elephant painted a masterpiece", "Giraffes danced in the starlight",
+    "Zebras played chess on the savannah", "The panther composed a symphony",
+    "Cheetahs raced against the wind", "An eagle wrote a novel",
+    "A sparrow solved a mystery", "The shark sang an opera",
+    "Dolphins built an underwater city", "A whale performed a ballet",
+    "Wolves howled in harmony", "Foxes hosted a tea party",
+    "The sky turned red with fireflies", "Blue oceans sparkled with magic",
+    "Green forests whispered secrets", "Yellow fields glowed with sunlight",
+    "Purple sunsets painted dreams", "Orange clouds drifted like balloons",
+    "Pink flowers danced in the breeze", "The world jumped into a new era",
+    "Running thoughts filled the air", "Dancing stars twinkled with delight",
+    "Swimming ideas flowed endlessly", "Flying carpets soared above",
+    "Crawling vines wrapped the tower", "Climbing mountains sang songs",
+    "Singing echoes filled the canyon", "Shouting waves crashed ashore"
+]
+
+
 def test_endpoints():
     # Static test case 
     register_user("static_user_1", "password")
@@ -65,7 +91,7 @@ def test_endpoints():
     for i in range(50):
         num_posts = random.randint(0, 5)  # Each user can create between 0 to 5 posts
         for _ in range(num_posts):
-            post_id = create_post(f"user{i}", f"Title {i}", f"Content {i}")
+            post_id = create_post(f"user{i}", random.choice(names_list) + random.choice(names_list) + random.choice(names_list) + {i}, random.choice(content_list) + {i})
             post_ids.append((post_id, f"user{i}"))
             time.sleep(0.1)
 
@@ -74,7 +100,7 @@ def test_endpoints():
         if random.choice([True, False]):  # Randomly decide if the user will edit their posts
             user_posts = [post_id for post_id, author in post_ids if author == f"user{i}"]
             for post_id in user_posts:
-                edit_post(f"user{i}", post_id, f"Updated Title {i}", f"Updated Content {i}")
+                edit_post(f"user{i}", post_id, f"Updated Title - {random.choice(names_list) + random.choice(names_list) + random.choice(names_list)}", f"Updated Content {random.choice(content_list)}")
                 time.sleep(0.1)
 
     # Create comments
@@ -83,7 +109,7 @@ def test_endpoints():
         num_comments = random.randint(0, 5)  # Each user can create between 0 to 5 comments
         for _ in range(num_comments):
             post_id, _ = random.choice(post_ids)
-            comment_id = create_comment(f"user{i}", post_id, f"Comment {i}")
+            comment_id = create_comment(f"user{i}", post_id, f"Comment {random.choice(content_list) + random.choice(content_list)}")
             comment_ids.append((comment_id, f"user{i}"))
             time.sleep(0.1)
 
