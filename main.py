@@ -8,8 +8,6 @@ from typing import List, Dict
 
 import logging
 
-
-import provenance as p
 from functools import wraps
 
 
@@ -30,7 +28,7 @@ p.load_config(config)
 
 app = FastAPI()
 
-# In-memory storage for simplicity
+# In-memory storage for simplici\
 users: Dict[str, "User"] = {}
 posts: Dict[int, "Post"] = {}
 comments: Dict[int, "Comment"] = {}
@@ -108,14 +106,14 @@ def loginT(user_username):
 def login(user: User):
     if user.username not in users or users[user.username].password != user.password:
         raise HTTPException(status_code=400, detail="Invalid username or password")
-    aux = loginT(user.username)
-    return users[aux]
+    loginT(user.username)
+    return users[user.username]
     # return {"message": "Login successful"}
 
 
 @p.provenance()
-def createPostT(post_id, post_title, user_username):
-    return id
+def createPostT(user_username, post_id, post_title, post_content):
+    return post_id
 
 
 # Create a post
@@ -125,14 +123,14 @@ def create_post(post: NewPost, current_user: User = Depends(get_current_user)):
     new_post = Post(
         id=new_id, title=post.title, content=post.content, author=post.author
     )
-    aux = createPostT(new_post.id, new_post.title, new_post.author)
+    createPostT(new_post.author, new_post.id, new_post.title, new_post.content)
     posts[new_id] = new_post
     return new_post
 
 
 @p.provenance()
-def editPostT(post_id, post_title, user_username):
-    return id
+def editPostT(user_username, post_id, post_title):
+    return post_id
 
 
 # Edit a post
@@ -142,14 +140,14 @@ def edit_post(post_id: int, post: Post, current_user: User = Depends(get_current
         raise HTTPException(status_code=404, detail="Post not found")
     if posts[post_id].author != current_user.username:
         raise HTTPException(status_code=403, detail="Not authorized to edit this post")
-    editPostT(post.id, post.title, post.author)
+    editPostT(post.author, post.id, post.title)
     posts[post_id] = post
     return post
 
 
 @p.provenance()
-def createCommentT(comment_id, comment_content, user_username):
-    return id
+def createCommentT(user_username, post_id, comment_id, comment_content):
+    return comment_id
 
 
 # Create a comment
@@ -162,19 +160,20 @@ def create_comment(comment: NewComment, current_user: User = Depends(get_current
         content=comment.content,
         author=comment.author,
     )
-    createCommentT(new_comment.id, new_comment.content, new_comment.author)
+    createCommentT(
+        new_comment.author, new_comment.post_id, new_comment.id, new_comment.content
+    )
     comments[new_id] = new_comment
     return new_comment
 
 
 @p.provenance()
-def editCommentT(comment_id, comment_content, user_username):
-    return id
+def editCommentT(user_username, comment_id, comment_content):
+    return comment_id
 
 
 # Edit a comment
 @app.put("/comments/{comment_id}")
-@p.provenance()
 def edit_comment(
     comment_id: int, comment: Comment, current_user: User = Depends(get_current_user)
 ):
@@ -184,33 +183,13 @@ def edit_comment(
         raise HTTPException(
             status_code=403, detail="Not authorized to edit this comment"
         )
-    editCommentT(comment.id, comment.content, comment.author, current_user.username)
+    editCommentT(comment.author, comment.id, comment.content)
     comments[comment_id] = comment
     return comment
 
 
 @p.provenance()
-def deleteCommentT(comment_id, comment_author, user_username):
-    return id
-
-
-# Delete a comment
-@app.delete("/comments/{comment_id}")
-def delete_comment(comment_id: int, current_user: User = Depends(get_current_user)):
-    if comment_id not in comments:
-        raise HTTPException(status_code=404, detail="Comment not found")
-    comment_author = comments[comment_id].author
-    if comment_author != current_user.username:
-        raise HTTPException(
-            status_code=403, detail="Not authorized to delete this comment"
-        )
-    deleteCommentT(comment_id, comment_author, current_user.username)
-    del comments[comment_id]
-    return {"message": "Comment deleted successfully"}
-
-
-@p.provenance()
-def likePostT(post_id, liked_post_id, user_username):
+def likePostT(user_username, post_id):
     return post_id
 
 
@@ -224,15 +203,15 @@ def like_post(post_id: int, current_user: User = Depends(get_current_user)):
     if current_user.username in likes[post_id]:
         raise HTTPException(status_code=400, detail="Post already liked")
 
-    likePostT(post_id, post_id, current_user.username)
+    likePostT(current_user.username, post_id)
 
     likes[post_id].append(current_user.username)
     return {"message": "Post liked successfully"}
 
 
 @p.provenance()
-def likeCommentT(post_id, liked_post_id, user_username):
-    return post_id
+def likeCommentT(user_username, comment_id):
+    return comment_id
 
 
 # Like a comment
@@ -245,7 +224,7 @@ def like_comment(comment_id: int, current_user: User = Depends(get_current_user)
     if current_user.username in likes[comment_id]:
         raise HTTPException(status_code=400, detail="Comment already liked")
 
-    likeCommentT(comment_id, comment_id, current_user.username)
+    likeCommentT(current_user.username, comment_id)
 
     likes[comment_id].append(current_user.username)
     return {"message": "Comment liked successfully"}
