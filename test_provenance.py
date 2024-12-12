@@ -148,10 +148,12 @@ def test_endpoints():
     # Register users
     for i in range(10):
         threading.Thread(target=register_user, args=(f"user{i}", "password")).start()
+        time.sleep(0.1)
 
     # Login users
     for i in range(10):
         threading.Thread(target=login_user, args=(f"user{i}", "password")).start()
+        time.sleep(0.1)
 
     # Create posts
     post_ids = []
@@ -167,6 +169,7 @@ def test_endpoints():
                 random.choice(content_list) + str(i),
             )
             post_ids.append((post_id, f"user{i}"))
+            time.sleep(0.1)
 
     # Edit posts
     for i in range(10):
@@ -183,6 +186,7 @@ def test_endpoints():
                     f"Updated Title - {random.choice(names_list) + random.choice(names_list) + random.choice(names_list)}",
                     f"Updated Content {random.choice(content_list)}",
                 )
+                time.sleep(0.1)
 
     # Create comments
     comment_ids = []
@@ -198,6 +202,7 @@ def test_endpoints():
                 f"Comment {random.choice(content_list) + random.choice(content_list)}",
             )
             comment_ids.append((comment_id, f"user{i}"))
+            time.sleep(0.1)
 
     # Like posts
     for i in range(10):
@@ -205,6 +210,7 @@ def test_endpoints():
         for _ in range(num_likes):
             post_id, _ = random.choice(post_ids)
             like_post(f"user{i}", post_id)
+            time.sleep(0.1)
 
     # Like comments
     for i in range(10):
@@ -212,6 +218,7 @@ def test_endpoints():
         for _ in range(num_likes):
             comment_id, _ = random.choice(comment_ids)
             like_comment(f"user{i}", comment_id)
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":
