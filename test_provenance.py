@@ -131,6 +131,9 @@ content_list = [
 
 
 def test_endpoints():
+
+    number_of_iteration = 10
+    
     # Static test case
     register_user("static_user_1", "password")
     login_user("static_user_1", "password")
@@ -146,18 +149,18 @@ def test_endpoints():
     like_comment("static_user_1", comment_id_2)
 
     # Register users
-    for i in range(10):
+    for i in range(number_of_iteration):
         threading.Thread(target=register_user, args=(f"user{i}", "password")).start()
         time.sleep(0.1)
 
     # Login users
-    for i in range(10):
+    for i in range(number_of_iteration):
         threading.Thread(target=login_user, args=(f"user{i}", "password")).start()
         time.sleep(0.1)
 
     # Create posts
     post_ids = []
-    for i in range(10):
+    for i in range(number_of_iteration):
         num_posts = random.randint(0, 5)  # Each user can create between 0 to 5 posts
         for _ in range(num_posts):
             post_id = create_post(
@@ -172,7 +175,7 @@ def test_endpoints():
             time.sleep(0.1)
 
     # Edit posts
-    for i in range(10):
+    for i in range(number_of_iteration):
         if random.choice(
             [True, False]
         ):  # Randomly decide if the user will edit their posts
@@ -190,7 +193,7 @@ def test_endpoints():
 
     # Create comments
     comment_ids = []
-    for i in range(10):
+    for i in range(number_of_iteration):
         num_comments = random.randint(
             0, 5
         )  # Each user can create between 0 to 5 comments
@@ -205,7 +208,7 @@ def test_endpoints():
             time.sleep(0.1)
 
     # Like posts
-    for i in range(10):
+    for i in range(number_of_iteration):
         num_likes = random.randint(0, 5)  # Each user can like between 0 to 5 posts
         for _ in range(num_likes):
             post_id, _ = random.choice(post_ids)
@@ -213,7 +216,7 @@ def test_endpoints():
             time.sleep(0.1)
 
     # Like comments
-    for i in range(10):
+    for i in range(number_of_iteration):
         num_likes = random.randint(0, 5)  # Each user can like between 0 to 5 comments
         for _ in range(num_likes):
             comment_id, _ = random.choice(comment_ids)
